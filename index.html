@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+<title>Studio Cannes — Comptes (local)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div id="loading" class="loading-screen">
+    <div class="loading-mark">Studio Cannes</div>
+    <div class="loading-sub">Chargement du registre…</div>
+  </div>
+
+  <div id="app" class="page" style="display:none;">
+
+    <header class="header">
+      <div>
+        <div class="kicker">Registre local · 50 / 50</div>
+        <h1 class="title">Studio Cannes</h1>
+      </div>
+      <button id="settingsBtn" class="icon-btn" aria-label="Réglages">⚙︎</button>
+    </header>
+
+    <div id="errorBanner" class="error-banner" style="display:none;">
+      <span id="errorText"></span>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <button id="retryBtn" class="retry-btn" style="display:none;">Réessayer</button>
+        <button id="errorClose" class="error-close">✕</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="comptes">Comptes</button>
+      <button class="tab-btn" data-tab="documents">Documents</button>
+    </div>
+
+    <!-- ===== Comptes ===== -->
+    <section id="tab-comptes">
+      <section class="balance-card">
+        <div class="balance-label">Pour solde de tout compte</div>
+        <div id="balanceRow"></div>
+        <div id="balanceAmount" class="balance-amount"></div>
+        <div class="balance-divider"></div>
+        <div class="mini-stats">
+          <div class="mini-stat">
+            <div class="mini-stat-label">Dépenses totales</div>
+            <div id="totalExpenses" class="mini-stat-value">0,00 €</div>
+            <div id="expenseSub" class="mini-stat-sub"></div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-label">Recettes totales</div>
+            <div id="totalIncome" class="mini-stat-value">0,00 €</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="per-person">
+        <div class="person-card">
+          <div id="personAName" class="person-name">Arthur</div>
+          <div class="person-line"><span>Payé</span><span id="paidA" class="mono">0,00 €</span></div>
+          <div class="person-line"><span>Encaissé</span><span id="recvA" class="mono">0,00 €</span></div>
+        </div>
+        <div class="person-card">
+          <div id="personBName" class="person-name">Ma sœur</div>
+          <div class="person-line"><span>Payé</span><span id="paidB" class="mono">0,00 €</span></div>
+          <div class="person-line"><span>Encaissé</span><span id="recvB" class="mono">0,00 €</span></div>
+        </div>
+      </section>
+
+      <div class="list-header">
+        <h2 class="list-title">Mouvements</h2>
+        <button id="addTxBtn" class="add-btn">+ Ajouter</button>
+      </div>
+
+      <div class="filter-chips">
+        <button class="chip active" data-filter="all">Tous</button>
+        <button class="chip" data-filter="achat">Achat</button>
+        <button class="chip" data-filter="courant">Vie courante</button>
+      </div>
+
+      <div id="txEmpty" class="empty" style="display:none;">
+        <div class="empty-title">Le registre est vide</div>
+        <div class="empty-body">Ajoute la première dépense ou recette du studio.</div>
+      </div>
+      <ul id="txList" class="list"></ul>
+    </section>
+
+    <!-- ===== Documents ===== -->
+    <section id="tab-documents" style="display:none;">
+      <div class="list-header">
+        <h2 class="list-title">Documents</h2>
+        <button id="addDocBtn" class="add-btn">+ Ajouter</button>
+      </div>
+      <div id="docEmpty" class="empty" style="display:none;">
+        <div class="empty-title">Aucun document enregistré</div>
+        <div class="empty-body">Ajoute un lien vers le compromis, l'acte, les diagnostics…</div>
+      </div>
+      <ul id="docList" class="list"></ul>
+    </section>
+
+    <div class="note-text" style="margin-top:28px; text-align:center;">
+      Données stockées uniquement sur cet appareil, dans ce navigateur.
+      Pas de synchronisation avec ta sœur pour l'instant — exporte/importe
+      un fichier (bouton ⚙︎ Réglages) pour transférer le registre, ou passe
+      à la version partagée en ligne quand vous serez prêts.
+    </div>
+
+  </div>
+
+  <!-- ===== Modal: transaction form ===== -->
+  <div id="txModalOverlay" class="modal-overlay" style="display:none;">
+    <form id="txForm" class="modal">
+      <div id="txModalTitle" class="modal-title">Nouveau mouvement</div>
+
+      <div class="type-toggle">
+        <button type="button" class="type-btn expense active" data-field="type" data-value="expense">Dépense</button>
+        <button type="button" class="type-btn income" data-field="type" data-value="income">Recette</button>
+      </div>
+
+      <div class="type-toggle">
+        <button type="button" class="type-btn phase active" data-field="phase" data-value="courant">Vie courante</button>
+        <button type="button" class="type-btn phase" data-field="phase" data-value="achat">Achat du bien</button>
+      </div>
+
+      <label class="label">Description
+        <input id="txDescription" class="input" type="text" placeholder="Ex. Charges T3, Réparation robinet…" required />
+      </label>
+
+      <div class="form-grid">
+        <label class="label">Montant (€)
+          <input id="txAmount" class="input" inputmode="decimal" placeholder="0,00" required />
+        </label>
+        <label class="label">Date
+          <input id="txDate" class="input" type="date" required />
+        </label>
+      </div>
+
+      <div class="form-grid">
+        <label class="label">Catégorie
+          <select id="txCategory" class="input"></select>
+        </label>
+        <label class="label">Payé / reçu par
+          <select id="txPaidBy" class="input">
+            <option value="a">Arthur</option>
+            <option value="b">Ma sœur</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="txCancel" class="cancel-btn">Annuler</button>
+        <button type="submit" class="save-btn">Ajouter</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ===== Modal: document form ===== -->
+  <div id="docModalOverlay" class="modal-overlay" style="display:none;">
+    <form id="docForm" class="modal">
+      <div id="docModalTitle" class="modal-title">Nouveau document</div>
+
+      <label class="label">Titre
+        <input id="docTitle" class="input" type="text" placeholder="Ex. Compromis de vente…" required />
+      </label>
+
+      <div class="form-grid">
+        <label class="label">Catégorie
+          <select id="docCategory" class="input"></select>
+        </label>
+        <label class="label">Date
+          <input id="docDate" class="input" type="date" />
+        </label>
+      </div>
+
+      <label class="label">Lien (Drive, Dropbox…)
+        <input id="docLink" class="input" type="url" placeholder="https://drive.google.com/…" />
+      </label>
+
+      <label class="label">Note
+        <input id="docNote" class="input" type="text" placeholder="Précision utile…" />
+      </label>
+
+      <div class="note-text">Le fichier reste hébergé sur ton Drive/Dropbox — seul le lien est enregistré ici.</div>
+
+      <div class="modal-actions">
+        <button type="button" id="docCancel" class="cancel-btn">Annuler</button>
+        <button type="submit" class="save-btn">Ajouter</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ===== Modal: settings ===== -->
+  <div id="settingsModalOverlay" class="modal-overlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-title">Réglages</div>
+      <label class="label">Ton prénom
+        <input id="nameA" class="input" type="text" />
+      </label>
+      <label class="label">Prénom de l'autre copropriétaire
+        <input id="nameB" class="input" type="text" />
+      </label>
+      <div class="note-text">
+        Ce registre est stocké localement dans ce navigateur (pas de synchronisation).
+        Utilise Exporter / Importer pour transférer les données vers un autre appareil
+        ou les envoyer à ta sœur.
+      </div>
+      <div class="modal-actions" style="margin-top:4px;">
+        <button type="button" id="exportBtn" class="cancel-btn">Exporter (.json)</button>
+        <label class="save-btn" style="text-align:center; display:flex; align-items:center; justify-content:center;">
+          Importer…
+          <input type="file" id="importInput" accept="application/json" style="display:none;" />
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="settingsCancel" class="cancel-btn">Fermer</button>
+        <button type="button" id="settingsSave" class="save-btn">Enregistrer les noms</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app-local.js"></script>
+</body>
+</html>
